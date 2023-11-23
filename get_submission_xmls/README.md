@@ -21,7 +21,7 @@ options:
 **EXAMPLES**
 
 - Phakellia, ERGA-pilot:
-`` get_ENA_xml_files.py -f examples/sponge.runs.tsv -p ERGA-pilot -o odPhaVent``
+`` get_ENA_xml_files.py -f examples/sponge.pilot.runs.tsv -p ERGA-pilot -o odPhaVent``
 
-- Valencia hispanica, ERGA_BGE:
-``  get_ENA_xml_files.py -f examples/fValHis.runs.tsv -p ERGA-BGE -o fValHis1 ``
+- Valencia hispanica, ERGA-BGE:
+``  get_ENA_xml_files.py -f examples/fValHis.BGE.runs.tsv -p ERGA-BGE -o fValHis1 ``
