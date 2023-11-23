@@ -26,7 +26,8 @@ options:
 ``
 
 
-`` ./get_umbrella_xml_ENA.py -h
+```
+   ./get_umbrella_xml_ENA.py -h
 
 usage: get_umbrella_xml_ENA.py [-h] [-p {ERGA-BGE,CBP,ERGA-pilot,EASI,other}] [-c CENTER] [-n NAME]
                                [--sample-ambassador SAMPLE_AMBASSADOR] -t TOLID -s SPECIES -x TAXON_ID -a CHILDREN_ACCESSIONS
@@ -59,7 +60,7 @@ options:
   -a CHILDREN_ACCESSIONS [CHILDREN_ACCESSIONS ...], --children_accessions CHILDREN_ACCESSIONS [CHILDREN_ACCESSIONS ...]
                         species scientific name
 
-``
+```
 
 **EXAMPLES**
 
