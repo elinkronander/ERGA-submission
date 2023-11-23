@@ -72,3 +72,7 @@ options:
 **UMBRELLA**
 
 For BGE projects, the umbrella can be created by the administrators of the BGE ENA account or by the person submitting the data. The script to create umbrella projects is provided, but please, only use it if you want to be responsible to add all the children projects. If you would prefer not to be in charge of that, we are happy to take care of it. 
+
+- Example: ~/bin/get_umbrella_xml_ENA.py -s "Phakellia ventilabrum" -t odPhaVent2 -n "the chalice sponge"  -p ERGA-pilot -a PRJEB70435 PRJEB70436 -x 942649 --sample-ambassador "Ana Riesgo (Spain)"
+
+
