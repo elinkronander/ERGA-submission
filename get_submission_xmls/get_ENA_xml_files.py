@@ -30,7 +30,7 @@ def get_attributes (root, parent, child, attr, **element):
     parent.appendChild(child)
     return child
 
-def get_studies (project, center, cname, tolid, species, sample_ambassador, study_type, use, locus_tag):
+def get_studies (project, center, cname, tolid, species, sample_coordinator, study_type, use, locus_tag):
     study_title = species + " "  + study_type
     description = ""
     study_name = tolid
@@ -57,7 +57,7 @@ def get_studies (project, center, cname, tolid, species, sample_ambassador, stud
         description = env.get_template(description_template).render(
             species = species,
             cname = cname,
-            sample_ambassador = sample_ambassador,
+            sample_coordinator = sample_coordinator,
             use = use.lower()
         )
     elif study_type == "alternate assembly":
@@ -87,7 +87,7 @@ def get_studies (project, center, cname, tolid, species, sample_ambassador, stud
         description = env.get_template(description_template).render(
             species = species,
             cname = cname,
-            sample_ambassador = sample_ambassador,
+            sample_coordinator = sample_coordinator,
             use = alt_use.lower()
         )        
     elif study_type == "resequencing Data":
@@ -121,7 +121,7 @@ def get_studies (project, center, cname, tolid, species, sample_ambassador, stud
         description = env.get_template(description_template).render(
             species = species,
             cname = cname,
-            sample_ambassador = sample_ambassador,
+            sample_coordinator = sample_coordinator,
             data = study_type, 
             use = use.lower()
         )  
@@ -316,77 +316,93 @@ if __name__ == "__main__":
     
     for i in in_file.index:
              
-        if "center" not in in_file or pd.isna(in_file["center"][i]):
+        if "center" not in in_file or pd.isna(in_file["center"][i]) or in_file["center"][i] == "-":
             center = "CNAG"
         else:
             center = in_file['center'][i]
 
-        read_type = in_file['read_type'][i]
-        if read_type in read_type_choice:
-            if read_type == "HiC":
-                read_type = "Hi-C"
-        else:
-            exit(read_type + " is not one of the accepted values for read_type. Accepted values: " + str(read_type_choice))
-
-        if "scientific_name" not in in_file or pd.isna(in_file["scientific_name"][i]):
+        if "scientific_name" not in in_file or pd.isna(in_file["scientific_name"][i]) or in_file["scientific_name"][i] == "-":
             exit ("Missing species scientific name, compulsory argument")
         else:
             species = in_file["scientific_name"][i]
 
-        if "tolid_prefix" not in in_file or pd.isna(in_file["tolid_prefix"][i]):
+        if "tolid" not in in_file or pd.isna(in_file["tolid"][i]) or in_file["tolid"][i] == "-":
             exit ("Missing tolid or tolid prefix, compulsory argument")
         else:
-            tolid = in_file["tolid_prefix"][i]
+            tolid = in_file["tolid"][i]
 
         cname = ""
-        if "common_name" in in_file and not pd.isna(in_file["common_name"][i]):
+        if "common_name" in in_file and not pd.isna(in_file["common_name"][i]) and not in_file["common_name"][i] == "-":
             cname = in_file["common_name"][i]  
+        elif "common_names" in in_file and not pd.isna(in_file["common_names"][i]) and not in_file["common_names"][i] == "-":
+            cname = in_file["common_names"][i] 
 
-        sample_ambassador = ""
-        if "sample_ambassador" not in in_file or pd.isna(in_file["sample_ambassador"][i]):
+
+        sample_coordinator = ""
+        if "sample_coordinator" not in in_file or pd.isna(in_file["sample_coordinator"][i]) or in_file["sample_coordinator"][i] == "-":
             if args.project == "ERGA-pilot":
                 exit ("Missing sample ambassador details, required argument for ERGA-pilot genomes.")
         else:
-            sample_ambassador = in_file["sample_ambassador"][i]   
+            sample_coordinator = in_file["sample_coordinator"][i]   
 
         locus_tag = "-"
-        if "locus_tag" in in_file and not pd.isna(in_file["locus_tag"][i]):
+        if "locus_tag" in in_file and not pd.isna(in_file["locus_tag"][i]) and not in_file["locus_tag"][i] == "-":
             locus_tag = in_file["locus_tag"][i]        
   
         sample_id = ""
-        if "sample_id" not in in_file or pd.isna(in_file["sample_id"][i]):
-            exit ("Missing sample_id")
+        if 'sample_tube_or_well_id' in in_file and not pd.isna(in_file["sample_tube_or_well_id"][i]) and not in_file["sample_tube_or_well_id"][i] == "-":
+            sample_id = in_file["sample_tube_or_well_id"][i]
         else:
-            sample_id = in_file["sample_id"][i]   
+            exit ("Missing sample_tube_or_well_id")
           
         if 'all' in args.xml or "experiment" in args.xml:
             instrument = ""
-            if "instrument" not in in_file or pd.isna(in_file["instrument"][i]):
+            if "instrument" not in in_file or pd.isna(in_file["instrument"][i]) or in_file["instrument"][i] == "-":
                 exit ("Instrument model value is necessary to get the experiment xml")
             instrument = in_file["instrument"][i]  
 
             sample_ref = ""
-            if "sample_accession" not in in_file or pd.isna(in_file["sample_accession"][i]):
+            if "biosample_accession" not in in_file or pd.isna(in_file["biosample_accession"][i]) or in_file["biosample_accession"][i] == "-":
                 exit ("Sample accession is required to get the experiment xml")
-            sample_ref = in_file["sample_accession"][i]    
+            sample_ref = in_file["biosample_accession"][i]    
 
             library_selection = ""
-            if "library_selection" not in in_file or pd.isna(in_file["library_selection"][i]):
+            if "library_selection" not in in_file or pd.isna(in_file["library_selection"][i]) or in_file["library_selection"][i] == "-":
                 exit ("Library selection value is required to get the experiment xml")
             library_selection = in_file["library_selection"][i]      
         
         if 'all' in args.xml or 'experiment' in args.xml or 'runs' in args.xml:
-            library_strategy = ""
-            if "library_strategy" not in in_file or pd.isna(in_file["library_strategy"][i]):
+            if "library_strategy" not in in_file or pd.isna(in_file["library_strategy"][i]) or in_file["library_strategy"][i] == "-":
                 exit ("Library strategy value is required to get the experiment xml")
             library_strategy = in_file["library_strategy"][i]                
             
             if library_strategy not in library_strategy_choice:
                 exit(library_strategy + " is not one of the accepted values. Accepted values:" + str(library_strategy_choice))
 
+            if "read_type" not in in_file or pd.isna(in_file["read_type"][i]) or in_file["read_type"][i] == "-":
+                if library_strategy == "Hi-C":
+                    read_type = library_strategy
+                elif "Illumina" in instrument:
+                    read_type = "Illumina"
+                elif "ION" in instrument:
+                    read_type = "ONT"
+                else:
+                    read_type = "Hifi"
+            else:
+                read_type = in_file['read_type'][i]
+        
+            if read_type not in read_type_choice:
+                if read_type == "HiC":
+                    read_type = "Hi-C"
+                else:
+                    exit(read_type + " is not one of the accepted values for read_type. Accepted values: " + str(read_type_choice))
+
         aim = "assembly and annotation"
-        if "aim" in in_file and not pd.isna(in_file["aim"][i]):
-            aim = in_file["aim"][i]          
+        if "aim" in in_file and not pd.isna(in_file["aim"][i]) and not in_file["aim"][i] == "-":
+            aim = in_file["aim"][i]
+            if args.project == "ERGA-BGE":
+                aim = "assembly and annotation"    
+             
         
         study_type = {}
         study_type[tolid] = []
@@ -413,14 +429,16 @@ if __name__ == "__main__":
             if "annotation" in alternate.lower():
                 alternate_annot = "yes"
 
-        rname = tolid + "_" + read_type + "_" + library_strategy + "_" + sample_id
-        experiments[rname] = "exp_" + tolid + "_" + read_type + "_" + library_strategy + "_" + sample_id
         if read_type == library_strategy:
             rname = tolid + "_" + read_type + "_" + sample_id
-            experiments[rname] = "exp_" + tolid + "_" + library_strategy + "_" + sample_id       
+            experiments[rname] = "exp_" + tolid + "_" + library_strategy + "_" + sample_id
+        else:
+            rname = tolid + "_" + read_type + "_" + library_strategy + "_" + sample_id
+            experiments[rname] = "exp_" + tolid + "_" + read_type + "_" + library_strategy + "_" + sample_id
+       
 
         forward_file_name = ""
-        if "forward_file_name" in in_file and not pd.isna(in_file["forward_file_name"][i]):
+        if "forward_file_name" in in_file and not pd.isna(in_file["forward_file_name"][i]) and not in_file["forward_file_name"][i] == "-":
             forward_file_name = in_file["forward_file_name"][i]         
                 
             filetype[forward_file_name] = "fastq"
@@ -429,29 +447,29 @@ if __name__ == "__main__":
                 files_run[fastq_run] = []
             files_run[fastq_run].append(forward_file_name)
 
-            if "forward_md5" not in in_file or pd.isna(in_file["forward_md5"][i]):
+            if "forward_file_md5" not in in_file or pd.isna(in_file["forward_file_md5"][i]) or in_file["forward_file_md5"][i] == "-":
                 exit ("Missing md5 value for " + forward_file_name)
             else:
-                md5sum[forward_file_name] = in_file["forward_md5"][i]
+                md5sum[forward_file_name] = in_file["forward_file_md5"][i]
 
         reverse_file_name = ""
-        if "reverse_file_name" in in_file and not pd.isna(in_file["reverse_file_name"][i]):
+        if "reverse_file_name" in in_file and not pd.isna(in_file["reverse_file_name"][i]) and not in_file["reverse_file_name"][i] == "-":
             reverse_file_name = in_file["reverse_file_name"][i]       
             if "fastq" in reverse_file_name:
                 files_reverse[forward_file_name] = reverse_file_name
 
-                if "reverse_md5" not in in_file or pd.isna(in_file["reverse_md5"][i]):
+                if "reverse_file_md5" not in in_file or pd.isna(in_file["reverse_file_md5"][i]) or in_file["reverse_file_md5"][i] == "-":
                     exit ("Missing md5 value for " + reverse_file_name)
                 else:
-                    md5sum[reverse_file_name] = in_file["reverse_md5"][i]
+                    md5sum[reverse_file_name] = in_file["reverse_file_md5"][i]
 
         native_file_name = ""
-        if "native_file_name" in in_file and not pd.isna(in_file["native_file_name"][i]):
+        if "native_file_name" in in_file and not pd.isna(in_file["native_file_name"][i]) and not in_file["native_file_name"][i] == "-":
             native_file_name = in_file["native_file_name"][i] 
-            if "native_md5" not in in_file or pd.isna(in_file["native_md5"][i]):
+            if "native_file_md5" not in in_file or pd.isna(in_file["native_file_md5"][i]) or in_file["native_file_md5"][i] == "-":
                 exit ("Missing md5 value for " + native_file_name)
             else:
-                md5sum[native_file_name] = in_file["native_md5"][i]
+                md5sum[native_file_name] = in_file["native_file_md5"][i]
     
             native_run = ""  
             if "fast5" in native_file_name:
@@ -466,13 +484,13 @@ if __name__ == "__main__":
 
         add_lib = {}
         library_attributes = ""
-        if "library_attributes" in in_file and not pd.isna(in_file["library_attributes"][i]):
+        if "library_attributes" in in_file and not pd.isna(in_file["library_attributes"][i]) and not in_file["library_attributes"][i] == "-":
             library_attributes = in_file["library_attributes"][i] 
             add_lib = library_attributes.replace('{','').replace('}','')
 
         add_exp = {}
         experiment_attributes = ""
-        if "experiment_attributes" in in_file and not pd.isna(in_file["experiment_attributes"][i]):
+        if "experiment_attributes" in in_file and not pd.isna(in_file["experiment_attributes"][i]) and not in_file["experiment_attributes"][i] == "-":
             experiment_attributes = in_file["experiment_attributes"][i] 
             add_exp = experiment_attributes.replace('{','').replace('}','')
  
@@ -486,7 +504,7 @@ if __name__ == "__main__":
                         cname,
                         tolid,
                         species,
-                        sample_ambassador,
+                        sample_coordinator,
                         type,
                         aim,
                         locus_tag
