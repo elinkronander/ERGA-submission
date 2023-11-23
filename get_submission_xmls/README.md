@@ -4,8 +4,7 @@ The scripts get_ENA_xml_files.py and get_umbrella_xml.py work with python3, the 
 
 **USAGE**
 
-``
-usage: get_ENA_xml_files.py [-h] -f FILES [-p {ERGA-BGE,CBP,ERGA-pilot,EASI,other}]
+`` usage: get_ENA_xml_files.py [-h] -f FILES [-p {ERGA-BGE,CBP,ERGA-pilot,EASI,other}]
                             [-x {all,study,experiment,runs} [{all,study,experiment,runs} ...]] -o OUT_PREFIX
 
 
@@ -27,8 +26,7 @@ options:
 ``
 
 
-``
-./get_umbrella_xml_ENA.py -h
+`` ./get_umbrella_xml_ENA.py -h
 
 usage: get_umbrella_xml_ENA.py [-h] [-p {ERGA-BGE,CBP,ERGA-pilot,EASI,other}] [-c CENTER] [-n NAME]
                                [--sample-ambassador SAMPLE_AMBASSADOR] -t TOLID -s SPECIES -x TAXON_ID -a CHILDREN_ACCESSIONS
