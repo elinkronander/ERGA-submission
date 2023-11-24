@@ -1,0 +1,1 @@
+This project collects the sequencing data and assemblies generated for {{species}} by the European Reference Genome Atlas (ERGA, https://www.erga-biodiversity.eu/) for the Biodiversity Genomics Europe project (BGE, https://biodiversitygenomics.eu/).
