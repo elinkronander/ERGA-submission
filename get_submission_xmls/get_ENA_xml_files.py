@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 from os import path
 import json
@@ -171,7 +171,8 @@ def get_study_xml(project, center, alias, study_name, study_title, description, 
         attributes = get_attributes (root["study"],projects, attributes, 'PROJECT_ATTRIBUTES')
         study_attr = get_attributes (root["study"], attributes, study_attr, 'PROJECT_ATTRIBUTE', **keyword)
 
-def get_experiments (center, alias, species, read_type, instrument, study_alias, sample_ref, flowcell, library_strategy, library_selection, add_lib, add_exp):
+#add exp_attr as argument in function
+def get_experiments (center, alias, species, read_type, instrument, study_alias, sample_ref, flowcell, library_strategy, library_selection, exp_attr, add_lib, add_exp):
     exp_title = species + " " + read_type + " " + library_strategy +  " data"
     lib_name = flowcell + " " + read_type + " " + library_strategy
     if read_type == library_strategy:
@@ -187,11 +188,14 @@ def get_experiments (center, alias, species, read_type, instrument, study_alias,
     if read_type == "ONT":
         layout = 'SINGLE'
         model = 'OXFORD_NANOPORE'
+    elif read_type == "Hifi":  #add PacBio, might cause issues for others
+        layout = 'SINGLE'
+        model = 'PACBIO_SMRT'
 
     if 'all' in args.xml or "experiment" in args.xml:
-        get_exp_xml (center, alias, exp_title,study_alias, sample_ref, lib_name, library_strategy, source, layout,  library_selection, add_lib, add_exp, model, instrument)
+        get_exp_xml (center, alias, exp_title,study_alias, sample_ref, lib_name, library_strategy, source, layout,  library_selection, add_lib, exp_attr, add_exp, model, instrument) #add exp_attr
 
-def get_exp_xml (center, alias, exp_title, study_alias, sample_ref, lib_name, library_strategy, source,layout, library_selection, add_lib, add_exp, model, instrument):
+def get_exp_xml (center, alias, exp_title, study_alias, sample_ref, lib_name, library_strategy, source,layout, library_selection, add_lib, exp_attr, add_exp, model, instrument): #add exp_attr
  
     experiments = ""
     elements = {}
@@ -224,6 +228,8 @@ def get_exp_xml (center, alias, exp_title, study_alias, sample_ref, lib_name, li
             key = dict.split(':')
             library = get_attributes (root["exp"],design, library, key[0], **{key[1]:""})
 
+    #added code
+    library  = get_attributes (root["exp"],design, library, 'LIBRARY_CONSTRUCTION_PROTOCOL', **{exp_attr:""})
 
     platform=""
     attributes = get_attributes (root["exp"],experiments, attributes, 'PLATFORM')
@@ -370,7 +376,12 @@ if __name__ == "__main__":
             if "library_selection" not in in_file or pd.isna(in_file["library_selection"][i]) or in_file["library_selection"][i] == "-":
                 exit ("Library selection value is required to get the experiment xml")
             library_selection = in_file["library_selection"][i]      
-        
+
+            #added code for handling exp_attr
+            exp_attr = ""
+            if "exp_attr" in in_file and not in_file["exp_attr"][i] == "-":
+                exp_attr =  in_file["exp_attr"][i]
+
         if 'all' in args.xml or 'experiment' in args.xml or 'runs' in args.xml:
             if "library_strategy" not in in_file or pd.isna(in_file["library_strategy"][i]) or in_file["library_strategy"][i] == "-":
                 exit ("Library strategy value is required to get the experiment xml")
@@ -527,6 +538,7 @@ if __name__ == "__main__":
                     sample_id,
                     library_strategy, 
                     library_selection,
+                    exp_attr, #addition so that library_construction_protocol is written
                     add_lib,
                     add_exp,
                 )
