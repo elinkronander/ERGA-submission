@@ -19,3 +19,34 @@ Add an `elif` in `get_experiments` function (ugly hack, which might destroy thin
 
 ### library_construction_protocol
 Using `exp_attr` variable to be put as library construction protocol, all places where updates have been made has a comment (#add...).
+
+### PROJECT_ATTRIBUTES
+
+* The Keyword-ERGA-BGE attributes does not take (i.e. there are no attributes registered) when using the script. Hence, the code needs to be updated to write:
+    ```
+    <PROJECT_ATTRIBUTES>
+        <PROJECT_ATTRIBUTE>
+        <TAG>Keyword</TAG>
+        <VALUE>ERGA-BGE</VALUE>
+        </PROJECT_ATTRIBUTE>
+    </PROJECT_ATTRIBUTES>
+    ```
+    instead of:
+    ```
+    <PROJECT_ATTRIBUTES>
+        <PROJECT_ATTRIBUTE TAG="Keyword" VALUE="ERGA-BGE"/>
+    </PROJECT_ATTRIBUTES>
+* I entered the following code on line 171:
+    ```
+    # Fix code so that project attributes are written with TAG and VALUE as separate rows instead of on one
+    # original row: 
+    # study_attr = get_attributes (root["study"], attributes, study_attr, 'PROJECT_ATTRIBUTE', **keyword)
+    # replaced by:
+    study_attr = get_attributes (root["study"], attributes, study_attr, 'PROJECT_ATTRIBUTE')
+    kw_attr=""
+    kw_attr = get_attributes (root["study"], study_attr, kw_attr, 'TAG', **{'Keyword':""})
+    kw_attr = get_attributes (root["study"], study_attr, kw_attr, 'VALUE', **{project:""})
+    ```
+
+### To do
+* The xml script is not fully funtioning, insert size for paired reads is missing, and read_type 'sample_barcode' should likely be added to HiFi data, hence these needs to be added manually in the output run xmls for now.
