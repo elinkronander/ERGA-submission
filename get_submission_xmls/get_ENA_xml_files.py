@@ -179,13 +179,13 @@ def get_study_xml(project, center, alias, study_name, study_title, description, 
 #add exp_attr as argument in function
 def get_experiments (center, alias, species, read_type, instrument, study_alias, sample_ref, flowcell, library_strategy, library_selection, exp_attr, add_lib, add_exp, library_id):
     exp_title = species + " " + read_type + " " + library_strategy +  " data"
-    lib_name = flowcell + " " + read_type + " " + library_strategy + " " + library_id
+    lib_name = library_id + " " + read_type + " " + library_strategy
     if read_type == library_strategy:
         exp_title = species + " " + library_strategy +  " data"
-        lib_name = flowcell + " " + library_strategy + " " + library_id     
+        lib_name = library_id + " " + library_strategy     
     if read_type == "HiFi": # added code for including PacBio in title and library name
         exp_title = species + " " + "PacBio" + " " + read_type + " " + library_strategy +  " data"
-        lib_name = flowcell + " " + "PacBio" + " " + read_type + " " + library_strategy + " " + library_id
+        lib_name = library_id + " " + "PacBio" + " " + read_type + " " + library_strategy
     source = "GENOMIC"
     if library_strategy == "RNA-Seq":
         source = 'TRANSCRIPTOMIC'
