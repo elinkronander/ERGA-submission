@@ -17,7 +17,7 @@ import pandas as pd
 
 script_loc = os.path.dirname(sys.argv[0])
 env = jinja2.Environment(loader=jinja2.FileSystemLoader(script_loc + "/templates/"))
-print(script_loc)
+
 def get_attributes (root, parent, child, attr, **element):
     child = root.createElement(attr)
     if element:
@@ -92,7 +92,7 @@ def get_studies (project, center, cname, tolid, species, sample_coordinator, stu
         )        
     elif study_type == "resequencing Data":
         alias = cname.replace(' ', '_') + '_resequencing_data'
-        study_register[tolid_pref] = alias
+        study_register[tolid] = alias
         description = "This project collects the " + study_type + " generated for " + species +\
                          " (common name " + cname + ")" 
     else:
@@ -102,6 +102,7 @@ def get_studies (project, center, cname, tolid, species, sample_coordinator, stu
             cname = cname,
             data = study_type
         )
+        tolid_pref = re.sub(r'[0-9]', '', tolid)
         study_name = tolid_pref
         if project == "ERGA-pilot":
             description_template = "pilot_data_description.txt"       
@@ -116,7 +117,7 @@ def get_studies (project, center, cname, tolid, species, sample_coordinator, stu
             description_template = "bge_data_description.txt"               
         else:
             description_template = "other_data_description.txt" 
-        study_register[tolid_pref] = alias
+        study_register[tolid] = alias
         description = env.get_template(description_template).render(
             species = species,
             cname = cname,
@@ -168,24 +169,15 @@ def get_study_xml(project, center, alias, study_name, study_title, description, 
         attributes = ""
         study_attr = ""
         attributes = get_attributes (root["study"],projects, attributes, 'PROJECT_ATTRIBUTES')
-        # Fix code so that project attributes are written with TAG and VALUE as separate rows instead of on one
-        #study_attr = get_attributes (root["study"], attributes, study_attr, 'PROJECT_ATTRIBUTE', **keyword)
-        study_attr = get_attributes (root["study"], attributes, study_attr, 'PROJECT_ATTRIBUTE')
-        kw_attr=""
-        kw_attr = get_attributes (root["study"], study_attr, kw_attr, 'TAG', **{'Keyword':""})
-        kw_attr = get_attributes (root["study"], study_attr, kw_attr, 'VALUE', **{project:""})
+        study_attr = get_attributes (root["study"], attributes, study_attr, 'PROJECT_ATTRIBUTE', **keyword)
 
-
-#add exp_attr as argument in function
-def get_experiments (center, alias, species, read_type, instrument, study_alias, sample_ref, flowcell, library_strategy, library_selection, exp_attr, add_lib, add_exp, library_id):
+def get_experiments (center, alias, species, read_type, instrument, study_alias, sample_ref, flowcell, library_strategy, library_selection, add_lib, add_exp):
     exp_title = species + " " + read_type + " " + library_strategy +  " data"
-    lib_name = flowcell + " " + read_type + " " + library_strategy + " " + library_id
+    lib_name = flowcell + " " + read_type + " " + library_strategy
     if read_type == library_strategy:
         exp_title = species + " " + library_strategy +  " data"
-        lib_name = flowcell + " " + library_strategy + " " + library_id     
-    if read_type == "HiFi": # added code for including PacBio in title and library name
-        exp_title = species + " " + "PacBio" + " " + read_type + " " + library_strategy +  " data"
-        lib_name = flowcell + " " + "PacBio" + " " + read_type + " " + library_strategy + " " + library_id
+        lib_name = flowcell + " " + library_strategy     
+
     source = "GENOMIC"
     if library_strategy == "RNA-Seq":
         source = 'TRANSCRIPTOMIC'
@@ -195,14 +187,11 @@ def get_experiments (center, alias, species, read_type, instrument, study_alias,
     if read_type == "ONT":
         layout = 'SINGLE'
         model = 'OXFORD_NANOPORE'
-    elif read_type == "HiFi":  #add PacBio, might cause issues for others
-        layout = 'SINGLE'
-        model = 'PACBIO_SMRT'
 
     if 'all' in args.xml or "experiment" in args.xml:
-        get_exp_xml (center, alias, exp_title,study_alias, sample_ref, lib_name, library_strategy, source, layout,  library_selection, add_lib, exp_attr, add_exp, model, instrument) #add exp_attr
+        get_exp_xml (center, alias, exp_title,study_alias, sample_ref, lib_name, library_strategy, source, layout,  library_selection, add_lib, add_exp, model, instrument)
 
-def get_exp_xml (center, alias, exp_title, study_alias, sample_ref, lib_name, library_strategy, source,layout, library_selection, add_lib, exp_attr, add_exp, model, instrument): #add exp_attr
+def get_exp_xml (center, alias, exp_title, study_alias, sample_ref, lib_name, library_strategy, source,layout, library_selection, add_lib, add_exp, model, instrument):
  
     experiments = ""
     elements = {}
@@ -235,8 +224,6 @@ def get_exp_xml (center, alias, exp_title, study_alias, sample_ref, lib_name, li
             key = dict.split(':')
             library = get_attributes (root["exp"],design, library, key[0], **{key[1]:""})
 
-    #added code
-    #library  = get_attributes (root["exp"],design, library, 'LIBRARY_CONSTRUCTION_PROTOCOL', **{exp_attr:""})
 
     platform=""
     attributes = get_attributes (root["exp"],experiments, attributes, 'PLATFORM')
@@ -271,6 +258,7 @@ def get_runs_xml(center, alias, exp_alias, element, files_reverse):
 
     file= ""
 
+    
     file = get_attributes (root["runs"], files, file, 'FILE',
     **{"filename": element, "checksum_method":"MD5","checksum":md5sum[element],"filetype":filetype[element]})
 
@@ -291,7 +279,7 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--out_prefix", required=True, help="prefix to add to output files")   
     args = parser.parse_args()
 
-    read_type_choice = ['ONT', 'Illumina', 'Hi-C', 'HiFi']
+    read_type_choice = ['ONT', 'Illumina', 'Hi-C', 'Hifi']
     library_strategy_choice = ['WGS', 'Hi-C', 'RNA-Seq']
     
     if not args.files:
@@ -342,7 +330,6 @@ if __name__ == "__main__":
             exit ("Missing tolid or tolid prefix, compulsory argument")
         else:
             tolid = in_file["tolid"][i]
-            tolid_pref = re.sub(r'[0-9]', '', tolid)
 
         cname = ""
         if "common_name" in in_file and not pd.isna(in_file["common_name"][i]) and not in_file["common_name"][i] == "-":
@@ -383,12 +370,7 @@ if __name__ == "__main__":
             if "library_selection" not in in_file or pd.isna(in_file["library_selection"][i]) or in_file["library_selection"][i] == "-":
                 exit ("Library selection value is required to get the experiment xml")
             library_selection = in_file["library_selection"][i]      
-
-            #added code for handling exp_attr
-            exp_attr = ""
-            if "exp_attr" in in_file and not in_file["exp_attr"][i] == "-":
-                exp_attr =  in_file["exp_attr"][i]
-
+        
         if 'all' in args.xml or 'experiment' in args.xml or 'runs' in args.xml:
             if "library_strategy" not in in_file or pd.isna(in_file["library_strategy"][i]) or in_file["library_strategy"][i] == "-":
                 exit ("Library strategy value is required to get the experiment xml")
@@ -400,12 +382,12 @@ if __name__ == "__main__":
             if "read_type" not in in_file or pd.isna(in_file["read_type"][i]) or in_file["read_type"][i] == "-":
                 if library_strategy == "Hi-C":
                     read_type = library_strategy
-                elif "illumina" in instrument.lower():
+                elif "Illumina" in instrument:
                     read_type = "Illumina"
                 elif "ION" in instrument:
                     read_type = "ONT"
                 else:
-                    read_type = "HiFi"
+                    read_type = "Hifi"
             else:
                 read_type = in_file['read_type'][i]
         
@@ -423,7 +405,6 @@ if __name__ == "__main__":
              
         
         study_type = {}
-        #if read_type == "ONT" or read_type == "HiFi":
         study_type[tolid] = []
 
         if aim.lower() == "assembly":
@@ -448,19 +429,12 @@ if __name__ == "__main__":
             if "annotation" in alternate.lower():
                 alternate_annot = "yes"
 
-        library_id = in_file["library_name"][i]
-        add_lib = {}
-        library_attributes = ""
-        if "lib_attr" in in_file and not pd.isna(in_file["lib_attr"][i]) and not in_file["lib_attr"][i] == "-":
-            library_attributes = in_file["lib_attr"][i] 
-            add_lib = library_attributes.replace('{','').replace('}','')
-                                                                 
         if read_type == library_strategy:
-            rname = tolid_pref + "_" + read_type + "_" + sample_id + "_" + library_id
-            experiments[rname] = "exp_" + tolid_pref + "_" + library_strategy + "_" + sample_id  + "_" + library_id
+            rname = tolid + "_" + read_type + "_" + sample_id
+            experiments[rname] = "exp_" + tolid + "_" + library_strategy + "_" + sample_id
         else:
-            rname = tolid_pref + "_" + read_type + "_" + library_strategy + "_" + sample_id + "_" + library_id
-            experiments[rname] = "exp_" + tolid_pref + "_" + read_type + "_" + library_strategy + "_" + sample_id + "_" + library_id
+            rname = tolid + "_" + read_type + "_" + library_strategy + "_" + sample_id
+            experiments[rname] = "exp_" + tolid + "_" + read_type + "_" + library_strategy + "_" + sample_id
        
 
         forward_file_name = ""
@@ -502,7 +476,7 @@ if __name__ == "__main__":
                 filetype[native_file_name] = "OxfordNanopore_native"
                 native_run = rname + "_fast5s"
             elif "bam" in native_file_name:
-                filetype[native_file_name] = "bam"
+                filetype[native_file_name] = "BAM"
                 native_run = rname + "_bam" 
             if not native_run in files_run:
                 files_run[native_run] = []
@@ -510,20 +484,19 @@ if __name__ == "__main__":
 
         add_lib = {}
         library_attributes = ""
-        if "lib_attr" in in_file and not pd.isna(in_file["lib_attr"][i]) and not in_file["lib_attr"][i] == "-":
-            library_attributes = in_file["lib_attr"][i] 
+        if "library_attributes" in in_file and not pd.isna(in_file["library_attributes"][i]) and not in_file["library_attributes"][i] == "-":
+            library_attributes = in_file["library_attributes"][i] 
             add_lib = library_attributes.replace('{','').replace('}','')
 
         add_exp = {}
         experiment_attributes = ""
-        if "exp_attr" in in_file and not pd.isna(in_file["exp_attr"][i]) and not in_file["exp_attr"][i] == "-":
-            experiment_attributes = in_file["exp_attr"][i] 
+        if "experiment_attributes" in in_file and not pd.isna(in_file["experiment_attributes"][i]) and not in_file["experiment_attributes"][i] == "-":
+            experiment_attributes = in_file["experiment_attributes"][i] 
             add_exp = experiment_attributes.replace('{','').replace('}','')
  
         if 'all' in args.xml or "study" in args.xml:
-            # if read_type == "ONT" or read_type == "Hifi":
-            if tolid_pref not in study_register:
-                study_register[tolid_pref] = ""
+            if tolid not in study_register:
+                study_register[tolid] = ""
                 for type in study_type[tolid]:
                     get_studies(
                         args.project,
@@ -538,10 +511,10 @@ if __name__ == "__main__":
                     )
 
         if 'all' in args.xml or "experiment" in args.xml:
-            if "exp_" + tolid_pref + "_" + read_type + "_" + library_strategy + "_" + sample_id not in experiment_register and "exp_" + tolid + "_" + library_strategy + "_" + sample_id + "_" + library_id not in experiment_register:
-                experiment_register["exp_" + tolid_pref + "_" + read_type + "_" + library_strategy + "_" + sample_id + "_" + library_id] = ""
+            if "exp_" + tolid + "_" + read_type + "_" + library_strategy + "_" + sample_id not in experiment_register and "exp_" + tolid + "_" + library_strategy + "_" + sample_id not in experiment_register:
+                experiment_register["exp_" + tolid + "_" + read_type + "_" + library_strategy + "_" + sample_id] = ""
                 if read_type == library_strategy:
-                    experiment_register["exp_" + tolid_pref + "_" + library_strategy + "_" + sample_id + "_" + library_id] = ""
+                    experiment_register["exp_" + tolid + "_" + library_strategy + "_" + sample_id] = ""
                
                 get_experiments(
                     center,
@@ -549,15 +522,13 @@ if __name__ == "__main__":
                     species,
                     read_type,
                     instrument,
-                    study_register[tolid_pref],
+                    study_register[tolid],
                     sample_ref,
                     sample_id,
                     library_strategy, 
                     library_selection,
-                    exp_attr, #addition so that library_construction_protocol is written
                     add_lib,
                     add_exp,
-                    library_id
                 )
 
     if 'all' in args.xml or "runs" in args.xml:
