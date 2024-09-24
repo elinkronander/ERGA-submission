@@ -228,13 +228,9 @@ def get_exp_xml (center, alias, exp_title, study_alias, sample_ref, lib_name, li
     layout_lib = ""
     library  = get_attributes (root["exp"],design, library, 'LIBRARY_LAYOUT' )
 
-    # handle insert_size if paired reads, unable to use extra column insert_size from tsv, add the actual value manually for now
-    if layout == "PAIRED":
-        paired_extra = "PAIRED NOMINAL_LENGTH=\"\""
-        #layout_lib  = get_attributes (root["exp"],library,layout_lib, 'PAIRED NOMINAL_LENGTH', **{insert_size:""} ) # TypeError: keywords must be strings
-        layout_lib  = get_attributes (root["exp"],library,layout_lib,paired_extra)
-    else:
-        layout_lib  = get_attributes (root["exp"],library,layout_lib,layout)
+    # handle insert_size if paired reads, requires an extra column insert_size in tsv
+    #    layout_lib  = get_attributes (root["exp"],library,layout_lib,layout) # original row
+    layout_lib  = get_attributes (root["exp"],library,layout_lib,layout,**{"NOMINAL_LENGTH":str(insert_size)})
     if add_lib:
         my_dict = add_lib.split(';')
         for dict in my_dict:
