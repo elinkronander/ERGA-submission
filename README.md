@@ -7,3 +7,5 @@ Contains a guide for members of the BGE project with creating Studies and other 
 
 ## get_submission_xmls
 Contains python scripts to create the xml files required for submission of a sequencing project to ENA
+
+This is just a test
